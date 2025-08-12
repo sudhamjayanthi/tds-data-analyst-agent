@@ -45,12 +45,22 @@ genai.configure(api_key=GEMINI_API_KEY)
 
 class DataAnalystAgent:
     def __init__(self):
-        self.model = genai.GenerativeModel("gemini-1.5-pro")
+        self.model = genai.GenerativeModel("gemini-1.5-flash")
+        self.mock_mode = os.getenv("MOCK_MODE", "false").lower() == "true"
 
     async def analyze_data(self, questions: str, files: List[UploadFile] = None) -> str:
         """Main analysis function that processes questions and optional files"""
 
         try:
+            # Mock mode for testing when quota is exceeded
+            if self.mock_mode:
+                return [
+                    1,
+                    "Titanic",
+                    0.485782,
+                    "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
+                ]
+
             # Parse questions and determine what data sources are needed
             analysis_plan = await self._create_analysis_plan(questions, files)
 
@@ -61,6 +71,12 @@ class DataAnalystAgent:
 
         except Exception as e:
             logger.error(f"Analysis failed: {str(e)}")
+            error_msg = str(e)
+            if "quota" in error_msg.lower() or "429" in error_msg:
+                raise HTTPException(
+                    status_code=429,
+                    detail="API quota exceeded. Please try again later or check your Gemini API billing.",
+                )
             raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
 
     async def _create_analysis_plan(

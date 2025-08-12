@@ -4,12 +4,12 @@ A powerful API that uses Google's Gemini 2.5 Pro to source, prepare, analyze, an
 
 ## Features
 
-- 🤖 **AI-Powered Analysis**: Uses Gemini 2.5 Pro for intelligent data interpretation
-- 📊 **Data Visualization**: Creates charts, plots, and statistical visualizations
-- 🌐 **Web Scraping**: Can scrape data from Wikipedia and other sources
-- 📁 **Multi-Format Support**: Handles CSV, JSON, images, and text files
-- 🗄️ **Database Integration**: Supports DuckDB for large dataset queries
-- ⚡ **Fast API**: Built with FastAPI for high performance
+-   🤖 **AI-Powered Analysis**: Uses Gemini 2.5 Pro for intelligent data interpretation
+-   📊 **Data Visualization**: Creates charts, plots, and statistical visualizations
+-   🌐 **Web Scraping**: Can scrape data from Wikipedia and other sources
+-   📁 **Multi-Format Support**: Handles CSV, JSON, images, and text files
+-   🗄️ **Database Integration**: Supports DuckDB for large dataset queries
+-   ⚡ **Fast API**: Built with FastAPI for high performance
 
 ## Quick Start
 
@@ -62,8 +62,9 @@ POST /api/
 ### Request Format
 
 Send a multipart form request with:
-- `questions.txt`: A text file containing your analysis questions (required)
-- Additional files: CSV, JSON, images, or other data files (optional)
+
+-   `questions.txt`: A text file containing your analysis questions (required)
+-   Additional files: CSV, JSON, images, or other data files (optional)
 
 ### Example Usage
 
@@ -84,6 +85,7 @@ curl -X POST "http://localhost:8000/api/" \
 The agent can handle various types of analysis:
 
 **Web Scraping Analysis:**
+
 ```
 Scrape the list of highest grossing films from Wikipedia at:
 https://en.wikipedia.org/wiki/List_of_highest-grossing_films
@@ -96,6 +98,7 @@ Answer these questions:
 ```
 
 **Database Analysis:**
+
 ```
 Query the Indian high court dataset and answer:
 1. Which high court disposed the most cases from 2019-2022?
@@ -115,9 +118,9 @@ or
 
 ```json
 {
-  "question1": "answer1",
-  "question2": "answer2",
-  "plot": "data:image/png;base64,iVBORw0KG..."
+	"question1": "answer1",
+	"question2": "answer2",
+	"plot": "data:image/png;base64,iVBORw0KG..."
 }
 ```
 
@@ -132,9 +135,9 @@ The application is designed to be easily deployable to various platforms:
 3. Click "New" → "Web Service"
 4. Connect your GitHub repository
 5. Use these settings:
-   - **Build Command**: `pip install -r requirements.txt`
-   - **Start Command**: `gunicorn -c gunicorn.conf.py main:app`
-   - **Environment**: Python 3
+    - **Build Command**: `pip install -r requirements.txt`
+    - **Start Command**: `gunicorn -c gunicorn.conf.py main:app`
+    - **Environment**: Python 3
 6. Add environment variable: `GEMINI_API_KEY` = your_gemini_api_key
 7. Deploy!
 
@@ -176,11 +179,11 @@ tds-proj-2/
 
 ### Key Components
 
-- **DataAnalystAgent**: Core class handling analysis logic
-- **Gemini Integration**: Uses Google's Gemini 2.5 Pro for reasoning
-- **Data Processing**: Handles CSV, JSON, and web scraping
-- **Visualization**: Creates charts with matplotlib/seaborn
-- **Database Support**: DuckDB integration for large datasets
+-   **DataAnalystAgent**: Core class handling analysis logic
+-   **Gemini Integration**: Uses Google's Gemini 2.5 Pro for reasoning
+-   **Data Processing**: Handles CSV, JSON, and web scraping
+-   **Visualization**: Creates charts with matplotlib/seaborn
+-   **Database Support**: DuckDB integration for large datasets
 
 ### Contributing
 
@@ -197,6 +200,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ## Support
 
 For issues and questions:
+
 1. Check the existing issues on GitHub
 2. Create a new issue with detailed information
 3. Include sample requests and expected outputs
@@ -219,12 +223,14 @@ POST /api/
 ```
 
 **Parameters:**
-- `questions.txt` (required): Text file with analysis questions
-- Additional files (optional): Data files to analyze
+
+-   `questions.txt` (required): Text file with analysis questions
+-   Additional files (optional): Data files to analyze
 
 **Response:**
-- JSON array or object with analysis results
-- Base64-encoded images for visualizations
-- Error messages with HTTP status codes
+
+-   JSON array or object with analysis results
+-   Base64-encoded images for visualizations
+-   Error messages with HTTP status codes
 
 **Timeout:** 3 minutes maximum processing time

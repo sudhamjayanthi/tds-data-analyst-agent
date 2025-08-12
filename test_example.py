@@ -8,9 +8,10 @@ import json
 import tempfile
 import os
 
+
 def test_api_endpoint(base_url="http://localhost:8000"):
     """Test the API with a sample question"""
-    
+
     # Create a sample questions file
     questions_content = """
 Scrape the list of highest grossing films from Wikipedia. It is at the URL:
@@ -24,23 +25,23 @@ Answer the following questions and respond with a JSON array of strings containi
 
 Return as a base-64 encoded data URI, `"data:image/png;base64,iVBORw0KG..."` under 100,000 bytes.
 """
-    
+
     # Create temporary file
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False) as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
         f.write(questions_content)
         questions_file = f.name
-    
+
     try:
         # Test the API
-        with open(questions_file, 'rb') as f:
-            files = {'questions.txt': f}
-            
+        with open(questions_file, "rb") as f:
+            files = [("files", ("questions.txt", f, "text/plain"))]
+
             print(f"Testing API at {base_url}/api/")
             response = requests.post(f"{base_url}/api/", files=files, timeout=180)
-            
+
             print(f"Status Code: {response.status_code}")
             print(f"Response: {response.text[:500]}...")
-            
+
             if response.status_code == 200:
                 try:
                     result = response.json()
@@ -59,10 +60,11 @@ Return as a base-64 encoded data URI, `"data:image/png;base64,iVBORw0KG..."` und
                     print("❌ Response is not valid JSON")
             else:
                 print(f"❌ API test failed: {response.text}")
-                
+
     finally:
         # Clean up
         os.unlink(questions_file)
+
 
 def test_health_endpoint(base_url="http://localhost:8000"):
     """Test the health endpoint"""
@@ -75,18 +77,19 @@ def test_health_endpoint(base_url="http://localhost:8000"):
         print(f"Health check failed: {e}")
         return False
 
+
 if __name__ == "__main__":
     import sys
-    
+
     base_url = sys.argv[1] if len(sys.argv) > 1 else "http://localhost:8000"
-    
+
     print("Testing Data Analyst Agent API")
     print("=" * 40)
-    
+
     # Test health first
     if test_health_endpoint(base_url):
         print("✅ Health check passed")
-        
+
         # Test main functionality
         test_api_endpoint(base_url)
     else:
