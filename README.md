@@ -125,17 +125,31 @@ or
 
 The application is designed to be easily deployable to various platforms:
 
+### Render (Free Tier)
+
+1. Fork or clone this repository to your GitHub account
+2. Go to [Render Dashboard](https://dashboard.render.com)
+3. Click "New" → "Web Service"
+4. Connect your GitHub repository
+5. Use these settings:
+   - **Build Command**: `pip install -r requirements.txt`
+   - **Start Command**: `gunicorn -c gunicorn.conf.py main:app`
+   - **Environment**: Python 3
+6. Add environment variable: `GEMINI_API_KEY` = your_gemini_api_key
+7. Deploy!
+
+### Other Free Options
+
+**PythonAnywhere**: Upload files and configure WSGI
+**Heroku**: Use Heroku CLI or GitHub integration
+**Google App Engine**: Use gcloud CLI for deployment
+**Koyeb**: Connect GitHub repository with automatic deployments
+
 ### Railway
 
 1. Connect your GitHub repository to Railway
 2. Set the `GEMINI_API_KEY` environment variable
 3. Deploy automatically
-
-### Render
-
-1. Connect your GitHub repository to Render
-2. Set the `GEMINI_API_KEY` environment variable
-3. Use `python main.py` as the start command
 
 ### Docker
 
