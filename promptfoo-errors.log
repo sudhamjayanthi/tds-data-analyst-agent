@@ -13,3 +13,297 @@ Instead got:
 {
   "description": "Data analysis"
 }
+2025-08-19T18:26:43.979Z [ERROR]: Traceback (most recent call last):
+  File "/Users/sdm/.nvm/versions/node/v22.14.0/lib/node_modules/promptfoo/dist/src/python/wrapper.py", line 39, in <module>
+    result = call_method(script_path, method_name, *data)
+  File "/Users/sdm/.nvm/versions/node/v22.14.0/lib/node_modules/promptfoo/dist/src/python/wrapper.py", line 28, in call_method
+    return method_to_call(*args)
+  File "/var/folders/qz/s0hqld295s5gwx84c1sdd9bh0000gn/T/temp-python-code-1755628003861-b5de315eb986.py", line 5, in main
+    print(abs(float(json.loads(output)[2]) - 0.485782) <= 0.001)
+                    ~~~~~~~~~~^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/json/__init__.py", line 339, in loads
+    raise TypeError(f'the JSON object must be str, bytes or bytearray, '
+                    f'not {s.__class__.__name__}')
+TypeError: the JSON object must be str, bytes or bytearray, not dict
+2025-08-19T18:26:43.980Z [ERROR]: Traceback (most recent call last):
+  File "/Users/sdm/.nvm/versions/node/v22.14.0/lib/node_modules/promptfoo/dist/src/python/wrapper.py", line 39, in <module>
+    result = call_method(script_path, method_name, *data)
+  File "/Users/sdm/.nvm/versions/node/v22.14.0/lib/node_modules/promptfoo/dist/src/python/wrapper.py", line 28, in call_method
+    return method_to_call(*args)
+  File "/var/folders/qz/s0hqld295s5gwx84c1sdd9bh0000gn/T/temp-python-code-1755628003856-f0a9ea1e99f83.py", line 5, in main
+    print(json.loads(output)[0] == 1)
+          ~~~~~~~~~~^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/json/__init__.py", line 339, in loads
+    raise TypeError(f'the JSON object must be str, bytes or bytearray, '
+                    f'not {s.__class__.__name__}')
+TypeError: the JSON object must be str, bytes or bytearray, not dict
+2025-08-19T18:26:43.980Z [ERROR]: Traceback (most recent call last):
+  File "/Users/sdm/.nvm/versions/node/v22.14.0/lib/node_modules/promptfoo/dist/src/python/wrapper.py", line 39, in <module>
+    result = call_method(script_path, method_name, *data)
+  File "/Users/sdm/.nvm/versions/node/v22.14.0/lib/node_modules/promptfoo/dist/src/python/wrapper.py", line 28, in call_method
+    return method_to_call(*args)
+  File "/var/folders/qz/s0hqld295s5gwx84c1sdd9bh0000gn/T/temp-python-code-1755628003860-7935f6513f831.py", line 5, in main
+    print(bool(re.search(r'titanic', json.loads(output)[1], re.I)))
+                                     ~~~~~~~~~~^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/json/__init__.py", line 339, in loads
+    raise TypeError(f'the JSON object must be str, bytes or bytearray, '
+                    f'not {s.__class__.__name__}')
+TypeError: the JSON object must be str, bytes or bytearray, not dict
+2025-08-19T18:26:43.985Z [ERROR]: Error running Python script: TypeError: the JSON object must be str, bytes or bytearray, not dict
+Stack Trace: Error: TypeError: the JSON object must be str, bytes or bytearray, not dict
+    at PythonShell.parseError (/Users/sdm/.nvm/versions/node/v22.14.0/lib/node_modules/promptfoo/node_modules/python-shell/index.js:303:21)
+    at terminateIfNeeded (/Users/sdm/.nvm/versions/node/v22.14.0/lib/node_modules/promptfoo/node_modules/python-shell/index.js:193:32)
+    at ChildProcess.<anonymous> (/Users/sdm/.nvm/versions/node/v22.14.0/lib/node_modules/promptfoo/node_modules/python-shell/index.js:185:13)
+    at ChildProcess.emit (node:events:518:28)
+    at ChildProcess._handle.onexit (node:internal/child_process:293:12)
+    --Python Traceback: --
+    File "/Users/sdm/.nvm/versions/node/v22.14.0/lib/node_modules/promptfoo/dist/src/python/wrapper.py", line 39, in <module>
+      result = call_method(script_path, method_name, *data)
+    File "/Users/sdm/.nvm/versions/node/v22.14.0/lib/node_modules/promptfoo/dist/src/python/wrapper.py", line 28, in call_method
+      return method_to_call(*args)
+    File "/var/folders/qz/s0hqld295s5gwx84c1sdd9bh0000gn/T/temp-python-code-1755628003861-b5de315eb986.py", line 5, in main
+      print(abs(float(json.loads(output)[2]) - 0.485782) <= 0.001)
+                      ~~~~~~~~~~^^^^^^^^
+    File "/opt/homebrew/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/json/__init__.py", line 339, in loads
+      raise TypeError(f'the JSON object must be str, bytes or bytearray, '
+                      f'not {s.__class__.__name__}')
+2025-08-19T18:26:43.986Z [ERROR]: Error removing /var/folders/qz/s0hqld295s5gwx84c1sdd9bh0000gn/T/promptfoo-python-output-json-1755628003861-53ba87f5e7ffc.json: Error: ENOENT: no such file or directory, unlink '/var/folders/qz/s0hqld295s5gwx84c1sdd9bh0000gn/T/promptfoo-python-output-json-1755628003861-53ba87f5e7ffc.json'
+2025-08-19T18:26:43.986Z [ERROR]: Error executing Python code: Error: Error running Python script: TypeError: the JSON object must be str, bytes or bytearray, not dict
+Stack Trace: Error: TypeError: the JSON object must be str, bytes or bytearray, not dict
+    at PythonShell.parseError (/Users/sdm/.nvm/versions/node/v22.14.0/lib/node_modules/promptfoo/node_modules/python-shell/index.js:303:21)
+    at terminateIfNeeded (/Users/sdm/.nvm/versions/node/v22.14.0/lib/node_modules/promptfoo/node_modules/python-shell/index.js:193:32)
+    at ChildProcess.<anonymous> (/Users/sdm/.nvm/versions/node/v22.14.0/lib/node_modules/promptfoo/node_modules/python-shell/index.js:185:13)
+    at ChildProcess.emit (node:events:518:28)
+    at ChildProcess._handle.onexit (node:internal/child_process:293:12)
+    --Python Traceback: --
+    File "/Users/sdm/.nvm/versions/node/v22.14.0/lib/node_modules/promptfoo/dist/src/python/wrapper.py", line 39, in <module>
+      result = call_method(script_path, method_name, *data)
+    File "/Users/sdm/.nvm/versions/node/v22.14.0/lib/node_modules/promptfoo/dist/src/python/wrapper.py", line 28, in call_method
+      return method_to_call(*args)
+    File "/var/folders/qz/s0hqld295s5gwx84c1sdd9bh0000gn/T/temp-python-code-1755628003861-b5de315eb986.py", line 5, in main
+      print(abs(float(json.loads(output)[2]) - 0.485782) <= 0.001)
+                      ~~~~~~~~~~^^^^^^^^
+    File "/opt/homebrew/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/json/__init__.py", line 339, in loads
+      raise TypeError(f'the JSON object must be str, bytes or bytearray, '
+                      f'not {s.__class__.__name__}')
+2025-08-19T18:26:44.059Z [ERROR]: Error running Python script: TypeError: the JSON object must be str, bytes or bytearray, not dict
+Stack Trace: Error: TypeError: the JSON object must be str, bytes or bytearray, not dict
+    at PythonShell.parseError (/Users/sdm/.nvm/versions/node/v22.14.0/lib/node_modules/promptfoo/node_modules/python-shell/index.js:303:21)
+    at terminateIfNeeded (/Users/sdm/.nvm/versions/node/v22.14.0/lib/node_modules/promptfoo/node_modules/python-shell/index.js:193:32)
+    at ChildProcess.<anonymous> (/Users/sdm/.nvm/versions/node/v22.14.0/lib/node_modules/promptfoo/node_modules/python-shell/index.js:185:13)
+    at ChildProcess.emit (node:events:518:28)
+    at ChildProcess._handle.onexit (node:internal/child_process:293:12)
+    --Python Traceback: --
+    File "/Users/sdm/.nvm/versions/node/v22.14.0/lib/node_modules/promptfoo/dist/src/python/wrapper.py", line 39, in <module>
+      result = call_method(script_path, method_name, *data)
+    File "/Users/sdm/.nvm/versions/node/v22.14.0/lib/node_modules/promptfoo/dist/src/python/wrapper.py", line 28, in call_method
+      return method_to_call(*args)
+    File "/var/folders/qz/s0hqld295s5gwx84c1sdd9bh0000gn/T/temp-python-code-1755628003856-f0a9ea1e99f83.py", line 5, in main
+      print(json.loads(output)[0] == 1)
+            ~~~~~~~~~~^^^^^^^^
+    File "/opt/homebrew/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/json/__init__.py", line 339, in loads
+      raise TypeError(f'the JSON object must be str, bytes or bytearray, '
+                      f'not {s.__class__.__name__}')
+2025-08-19T18:26:44.060Z [ERROR]: Error removing /var/folders/qz/s0hqld295s5gwx84c1sdd9bh0000gn/T/promptfoo-python-output-json-1755628003857-d9cbb1420792c.json: Error: ENOENT: no such file or directory, unlink '/var/folders/qz/s0hqld295s5gwx84c1sdd9bh0000gn/T/promptfoo-python-output-json-1755628003857-d9cbb1420792c.json'
+2025-08-19T18:26:44.060Z [ERROR]: Error executing Python code: Error: Error running Python script: TypeError: the JSON object must be str, bytes or bytearray, not dict
+Stack Trace: Error: TypeError: the JSON object must be str, bytes or bytearray, not dict
+    at PythonShell.parseError (/Users/sdm/.nvm/versions/node/v22.14.0/lib/node_modules/promptfoo/node_modules/python-shell/index.js:303:21)
+    at terminateIfNeeded (/Users/sdm/.nvm/versions/node/v22.14.0/lib/node_modules/promptfoo/node_modules/python-shell/index.js:193:32)
+    at ChildProcess.<anonymous> (/Users/sdm/.nvm/versions/node/v22.14.0/lib/node_modules/promptfoo/node_modules/python-shell/index.js:185:13)
+    at ChildProcess.emit (node:events:518:28)
+    at ChildProcess._handle.onexit (node:internal/child_process:293:12)
+    --Python Traceback: --
+    File "/Users/sdm/.nvm/versions/node/v22.14.0/lib/node_modules/promptfoo/dist/src/python/wrapper.py", line 39, in <module>
+      result = call_method(script_path, method_name, *data)
+    File "/Users/sdm/.nvm/versions/node/v22.14.0/lib/node_modules/promptfoo/dist/src/python/wrapper.py", line 28, in call_method
+      return method_to_call(*args)
+    File "/var/folders/qz/s0hqld295s5gwx84c1sdd9bh0000gn/T/temp-python-code-1755628003856-f0a9ea1e99f83.py", line 5, in main
+      print(json.loads(output)[0] == 1)
+            ~~~~~~~~~~^^^^^^^^
+    File "/opt/homebrew/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/json/__init__.py", line 339, in loads
+      raise TypeError(f'the JSON object must be str, bytes or bytearray, '
+                      f'not {s.__class__.__name__}')
+2025-08-19T18:26:44.060Z [ERROR]: Error running Python script: TypeError: the JSON object must be str, bytes or bytearray, not dict
+Stack Trace: Error: TypeError: the JSON object must be str, bytes or bytearray, not dict
+    at PythonShell.parseError (/Users/sdm/.nvm/versions/node/v22.14.0/lib/node_modules/promptfoo/node_modules/python-shell/index.js:303:21)
+    at terminateIfNeeded (/Users/sdm/.nvm/versions/node/v22.14.0/lib/node_modules/promptfoo/node_modules/python-shell/index.js:193:32)
+    at ChildProcess.<anonymous> (/Users/sdm/.nvm/versions/node/v22.14.0/lib/node_modules/promptfoo/node_modules/python-shell/index.js:185:13)
+    at ChildProcess.emit (node:events:518:28)
+    at ChildProcess._handle.onexit (node:internal/child_process:293:12)
+    --Python Traceback: --
+    File "/Users/sdm/.nvm/versions/node/v22.14.0/lib/node_modules/promptfoo/dist/src/python/wrapper.py", line 39, in <module>
+      result = call_method(script_path, method_name, *data)
+    File "/Users/sdm/.nvm/versions/node/v22.14.0/lib/node_modules/promptfoo/dist/src/python/wrapper.py", line 28, in call_method
+      return method_to_call(*args)
+    File "/var/folders/qz/s0hqld295s5gwx84c1sdd9bh0000gn/T/temp-python-code-1755628003860-7935f6513f831.py", line 5, in main
+      print(bool(re.search(r'titanic', json.loads(output)[1], re.I)))
+                                       ~~~~~~~~~~^^^^^^^^
+    File "/opt/homebrew/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/json/__init__.py", line 339, in loads
+      raise TypeError(f'the JSON object must be str, bytes or bytearray, '
+                      f'not {s.__class__.__name__}')
+2025-08-19T18:26:44.061Z [ERROR]: Error removing /var/folders/qz/s0hqld295s5gwx84c1sdd9bh0000gn/T/promptfoo-python-output-json-1755628003860-5cff42c76e2dd.json: Error: ENOENT: no such file or directory, unlink '/var/folders/qz/s0hqld295s5gwx84c1sdd9bh0000gn/T/promptfoo-python-output-json-1755628003860-5cff42c76e2dd.json'
+2025-08-19T18:26:44.061Z [ERROR]: Error executing Python code: Error: Error running Python script: TypeError: the JSON object must be str, bytes or bytearray, not dict
+Stack Trace: Error: TypeError: the JSON object must be str, bytes or bytearray, not dict
+    at PythonShell.parseError (/Users/sdm/.nvm/versions/node/v22.14.0/lib/node_modules/promptfoo/node_modules/python-shell/index.js:303:21)
+    at terminateIfNeeded (/Users/sdm/.nvm/versions/node/v22.14.0/lib/node_modules/promptfoo/node_modules/python-shell/index.js:193:32)
+    at ChildProcess.<anonymous> (/Users/sdm/.nvm/versions/node/v22.14.0/lib/node_modules/promptfoo/node_modules/python-shell/index.js:185:13)
+    at ChildProcess.emit (node:events:518:28)
+    at ChildProcess._handle.onexit (node:internal/child_process:293:12)
+    --Python Traceback: --
+    File "/Users/sdm/.nvm/versions/node/v22.14.0/lib/node_modules/promptfoo/dist/src/python/wrapper.py", line 39, in <module>
+      result = call_method(script_path, method_name, *data)
+    File "/Users/sdm/.nvm/versions/node/v22.14.0/lib/node_modules/promptfoo/dist/src/python/wrapper.py", line 28, in call_method
+      return method_to_call(*args)
+    File "/var/folders/qz/s0hqld295s5gwx84c1sdd9bh0000gn/T/temp-python-code-1755628003860-7935f6513f831.py", line 5, in main
+      print(bool(re.search(r'titanic', json.loads(output)[1], re.I)))
+                                       ~~~~~~~~~~^^^^^^^^
+    File "/opt/homebrew/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/json/__init__.py", line 339, in loads
+      raise TypeError(f'the JSON object must be str, bytes or bytearray, '
+                      f'not {s.__class__.__name__}')
+2025-08-19T18:28:04.656Z [ERROR]: Traceback (most recent call last):
+  File "/Users/sdm/.nvm/versions/node/v22.14.0/lib/node_modules/promptfoo/dist/src/python/wrapper.py", line 39, in <module>
+    result = call_method(script_path, method_name, *data)
+  File "/Users/sdm/.nvm/versions/node/v22.14.0/lib/node_modules/promptfoo/dist/src/python/wrapper.py", line 28, in call_method
+    return method_to_call(*args)
+  File "/var/folders/qz/s0hqld295s5gwx84c1sdd9bh0000gn/T/temp-python-code-1755628084540-7b3d91615de53.py", line 5, in main
+    print(bool(re.search(r'titanic', json.loads(output)[1], re.I)))
+                                     ~~~~~~~~~~^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/json/__init__.py", line 339, in loads
+    raise TypeError(f'the JSON object must be str, bytes or bytearray, '
+                    f'not {s.__class__.__name__}')
+TypeError: the JSON object must be str, bytes or bytearray, not dict
+2025-08-19T18:28:04.656Z [ERROR]: Traceback (most recent call last):
+  File "/Users/sdm/.nvm/versions/node/v22.14.0/lib/node_modules/promptfoo/dist/src/python/wrapper.py", line 39, in <module>
+    result = call_method(script_path, method_name, *data)
+  File "/Users/sdm/.nvm/versions/node/v22.14.0/lib/node_modules/promptfoo/dist/src/python/wrapper.py", line 28, in call_method
+    return method_to_call(*args)
+  File "/var/folders/qz/s0hqld295s5gwx84c1sdd9bh0000gn/T/temp-python-code-1755628084541-f0a5db6c3e1cf.py", line 5, in main
+    print(abs(float(json.loads(output)[2]) - 0.485782) <= 0.001)
+                    ~~~~~~~~~~^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/json/__init__.py", line 339, in loads
+    raise TypeError(f'the JSON object must be str, bytes or bytearray, '
+                    f'not {s.__class__.__name__}')
+TypeError: the JSON object must be str, bytes or bytearray, not dict
+2025-08-19T18:28:04.657Z [ERROR]: Traceback (most recent call last):
+  File "/Users/sdm/.nvm/versions/node/v22.14.0/lib/node_modules/promptfoo/dist/src/python/wrapper.py", line 39, in <module>
+    result = call_method(script_path, method_name, *data)
+  File "/Users/sdm/.nvm/versions/node/v22.14.0/lib/node_modules/promptfoo/dist/src/python/wrapper.py", line 28, in call_method
+    return method_to_call(*args)
+  File "/var/folders/qz/s0hqld295s5gwx84c1sdd9bh0000gn/T/temp-python-code-1755628084536-88db75d43ab89.py", line 5, in main
+    print(json.loads(output)[0] == 1)
+          ~~~~~~~~~~^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/json/__init__.py", line 339, in loads
+    raise TypeError(f'the JSON object must be str, bytes or bytearray, '
+                    f'not {s.__class__.__name__}')
+TypeError: the JSON object must be str, bytes or bytearray, not dict
+2025-08-19T18:28:04.661Z [ERROR]: Error running Python script: TypeError: the JSON object must be str, bytes or bytearray, not dict
+Stack Trace: Error: TypeError: the JSON object must be str, bytes or bytearray, not dict
+    at PythonShell.parseError (/Users/sdm/.nvm/versions/node/v22.14.0/lib/node_modules/promptfoo/node_modules/python-shell/index.js:303:21)
+    at terminateIfNeeded (/Users/sdm/.nvm/versions/node/v22.14.0/lib/node_modules/promptfoo/node_modules/python-shell/index.js:193:32)
+    at ChildProcess.<anonymous> (/Users/sdm/.nvm/versions/node/v22.14.0/lib/node_modules/promptfoo/node_modules/python-shell/index.js:185:13)
+    at ChildProcess.emit (node:events:518:28)
+    at ChildProcess._handle.onexit (node:internal/child_process:293:12)
+    --Python Traceback: --
+    File "/Users/sdm/.nvm/versions/node/v22.14.0/lib/node_modules/promptfoo/dist/src/python/wrapper.py", line 39, in <module>
+      result = call_method(script_path, method_name, *data)
+    File "/Users/sdm/.nvm/versions/node/v22.14.0/lib/node_modules/promptfoo/dist/src/python/wrapper.py", line 28, in call_method
+      return method_to_call(*args)
+    File "/var/folders/qz/s0hqld295s5gwx84c1sdd9bh0000gn/T/temp-python-code-1755628084536-88db75d43ab89.py", line 5, in main
+      print(json.loads(output)[0] == 1)
+            ~~~~~~~~~~^^^^^^^^
+    File "/opt/homebrew/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/json/__init__.py", line 339, in loads
+      raise TypeError(f'the JSON object must be str, bytes or bytearray, '
+                      f'not {s.__class__.__name__}')
+2025-08-19T18:28:04.661Z [ERROR]: Error removing /var/folders/qz/s0hqld295s5gwx84c1sdd9bh0000gn/T/promptfoo-python-output-json-1755628084537-246b288690808.json: Error: ENOENT: no such file or directory, unlink '/var/folders/qz/s0hqld295s5gwx84c1sdd9bh0000gn/T/promptfoo-python-output-json-1755628084537-246b288690808.json'
+2025-08-19T18:28:04.661Z [ERROR]: Error executing Python code: Error: Error running Python script: TypeError: the JSON object must be str, bytes or bytearray, not dict
+Stack Trace: Error: TypeError: the JSON object must be str, bytes or bytearray, not dict
+    at PythonShell.parseError (/Users/sdm/.nvm/versions/node/v22.14.0/lib/node_modules/promptfoo/node_modules/python-shell/index.js:303:21)
+    at terminateIfNeeded (/Users/sdm/.nvm/versions/node/v22.14.0/lib/node_modules/promptfoo/node_modules/python-shell/index.js:193:32)
+    at ChildProcess.<anonymous> (/Users/sdm/.nvm/versions/node/v22.14.0/lib/node_modules/promptfoo/node_modules/python-shell/index.js:185:13)
+    at ChildProcess.emit (node:events:518:28)
+    at ChildProcess._handle.onexit (node:internal/child_process:293:12)
+    --Python Traceback: --
+    File "/Users/sdm/.nvm/versions/node/v22.14.0/lib/node_modules/promptfoo/dist/src/python/wrapper.py", line 39, in <module>
+      result = call_method(script_path, method_name, *data)
+    File "/Users/sdm/.nvm/versions/node/v22.14.0/lib/node_modules/promptfoo/dist/src/python/wrapper.py", line 28, in call_method
+      return method_to_call(*args)
+    File "/var/folders/qz/s0hqld295s5gwx84c1sdd9bh0000gn/T/temp-python-code-1755628084536-88db75d43ab89.py", line 5, in main
+      print(json.loads(output)[0] == 1)
+            ~~~~~~~~~~^^^^^^^^
+    File "/opt/homebrew/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/json/__init__.py", line 339, in loads
+      raise TypeError(f'the JSON object must be str, bytes or bytearray, '
+                      f'not {s.__class__.__name__}')
+2025-08-19T18:28:04.687Z [ERROR]: Error running Python script: TypeError: the JSON object must be str, bytes or bytearray, not dict
+Stack Trace: Error: TypeError: the JSON object must be str, bytes or bytearray, not dict
+    at PythonShell.parseError (/Users/sdm/.nvm/versions/node/v22.14.0/lib/node_modules/promptfoo/node_modules/python-shell/index.js:303:21)
+    at terminateIfNeeded (/Users/sdm/.nvm/versions/node/v22.14.0/lib/node_modules/promptfoo/node_modules/python-shell/index.js:193:32)
+    at ChildProcess.<anonymous> (/Users/sdm/.nvm/versions/node/v22.14.0/lib/node_modules/promptfoo/node_modules/python-shell/index.js:185:13)
+    at ChildProcess.emit (node:events:518:28)
+    at ChildProcess._handle.onexit (node:internal/child_process:293:12)
+    --Python Traceback: --
+    File "/Users/sdm/.nvm/versions/node/v22.14.0/lib/node_modules/promptfoo/dist/src/python/wrapper.py", line 39, in <module>
+      result = call_method(script_path, method_name, *data)
+    File "/Users/sdm/.nvm/versions/node/v22.14.0/lib/node_modules/promptfoo/dist/src/python/wrapper.py", line 28, in call_method
+      return method_to_call(*args)
+    File "/var/folders/qz/s0hqld295s5gwx84c1sdd9bh0000gn/T/temp-python-code-1755628084540-7b3d91615de53.py", line 5, in main
+      print(bool(re.search(r'titanic', json.loads(output)[1], re.I)))
+                                       ~~~~~~~~~~^^^^^^^^
+    File "/opt/homebrew/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/json/__init__.py", line 339, in loads
+      raise TypeError(f'the JSON object must be str, bytes or bytearray, '
+                      f'not {s.__class__.__name__}')
+2025-08-19T18:28:04.687Z [ERROR]: Error removing /var/folders/qz/s0hqld295s5gwx84c1sdd9bh0000gn/T/promptfoo-python-output-json-1755628084540-003b347b0ef3c.json: Error: ENOENT: no such file or directory, unlink '/var/folders/qz/s0hqld295s5gwx84c1sdd9bh0000gn/T/promptfoo-python-output-json-1755628084540-003b347b0ef3c.json'
+2025-08-19T18:28:04.688Z [ERROR]: Error executing Python code: Error: Error running Python script: TypeError: the JSON object must be str, bytes or bytearray, not dict
+Stack Trace: Error: TypeError: the JSON object must be str, bytes or bytearray, not dict
+    at PythonShell.parseError (/Users/sdm/.nvm/versions/node/v22.14.0/lib/node_modules/promptfoo/node_modules/python-shell/index.js:303:21)
+    at terminateIfNeeded (/Users/sdm/.nvm/versions/node/v22.14.0/lib/node_modules/promptfoo/node_modules/python-shell/index.js:193:32)
+    at ChildProcess.<anonymous> (/Users/sdm/.nvm/versions/node/v22.14.0/lib/node_modules/promptfoo/node_modules/python-shell/index.js:185:13)
+    at ChildProcess.emit (node:events:518:28)
+    at ChildProcess._handle.onexit (node:internal/child_process:293:12)
+    --Python Traceback: --
+    File "/Users/sdm/.nvm/versions/node/v22.14.0/lib/node_modules/promptfoo/dist/src/python/wrapper.py", line 39, in <module>
+      result = call_method(script_path, method_name, *data)
+    File "/Users/sdm/.nvm/versions/node/v22.14.0/lib/node_modules/promptfoo/dist/src/python/wrapper.py", line 28, in call_method
+      return method_to_call(*args)
+    File "/var/folders/qz/s0hqld295s5gwx84c1sdd9bh0000gn/T/temp-python-code-1755628084540-7b3d91615de53.py", line 5, in main
+      print(bool(re.search(r'titanic', json.loads(output)[1], re.I)))
+                                       ~~~~~~~~~~^^^^^^^^
+    File "/opt/homebrew/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/json/__init__.py", line 339, in loads
+      raise TypeError(f'the JSON object must be str, bytes or bytearray, '
+                      f'not {s.__class__.__name__}')
+2025-08-19T18:28:04.688Z [ERROR]: Error running Python script: TypeError: the JSON object must be str, bytes or bytearray, not dict
+Stack Trace: Error: TypeError: the JSON object must be str, bytes or bytearray, not dict
+    at PythonShell.parseError (/Users/sdm/.nvm/versions/node/v22.14.0/lib/node_modules/promptfoo/node_modules/python-shell/index.js:303:21)
+    at terminateIfNeeded (/Users/sdm/.nvm/versions/node/v22.14.0/lib/node_modules/promptfoo/node_modules/python-shell/index.js:193:32)
+    at ChildProcess.<anonymous> (/Users/sdm/.nvm/versions/node/v22.14.0/lib/node_modules/promptfoo/node_modules/python-shell/index.js:185:13)
+    at ChildProcess.emit (node:events:518:28)
+    at ChildProcess._handle.onexit (node:internal/child_process:293:12)
+    --Python Traceback: --
+    File "/Users/sdm/.nvm/versions/node/v22.14.0/lib/node_modules/promptfoo/dist/src/python/wrapper.py", line 39, in <module>
+      result = call_method(script_path, method_name, *data)
+    File "/Users/sdm/.nvm/versions/node/v22.14.0/lib/node_modules/promptfoo/dist/src/python/wrapper.py", line 28, in call_method
+      return method_to_call(*args)
+    File "/var/folders/qz/s0hqld295s5gwx84c1sdd9bh0000gn/T/temp-python-code-1755628084541-f0a5db6c3e1cf.py", line 5, in main
+      print(abs(float(json.loads(output)[2]) - 0.485782) <= 0.001)
+                      ~~~~~~~~~~^^^^^^^^
+    File "/opt/homebrew/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/json/__init__.py", line 339, in loads
+      raise TypeError(f'the JSON object must be str, bytes or bytearray, '
+                      f'not {s.__class__.__name__}')
+2025-08-19T18:28:04.688Z [ERROR]: Error removing /var/folders/qz/s0hqld295s5gwx84c1sdd9bh0000gn/T/promptfoo-python-output-json-1755628084541-068e888fb5e3c.json: Error: ENOENT: no such file or directory, unlink '/var/folders/qz/s0hqld295s5gwx84c1sdd9bh0000gn/T/promptfoo-python-output-json-1755628084541-068e888fb5e3c.json'
+2025-08-19T18:28:04.688Z [ERROR]: Error executing Python code: Error: Error running Python script: TypeError: the JSON object must be str, bytes or bytearray, not dict
+Stack Trace: Error: TypeError: the JSON object must be str, bytes or bytearray, not dict
+    at PythonShell.parseError (/Users/sdm/.nvm/versions/node/v22.14.0/lib/node_modules/promptfoo/node_modules/python-shell/index.js:303:21)
+    at terminateIfNeeded (/Users/sdm/.nvm/versions/node/v22.14.0/lib/node_modules/promptfoo/node_modules/python-shell/index.js:193:32)
+    at ChildProcess.<anonymous> (/Users/sdm/.nvm/versions/node/v22.14.0/lib/node_modules/promptfoo/node_modules/python-shell/index.js:185:13)
+    at ChildProcess.emit (node:events:518:28)
+    at ChildProcess._handle.onexit (node:internal/child_process:293:12)
+    --Python Traceback: --
+    File "/Users/sdm/.nvm/versions/node/v22.14.0/lib/node_modules/promptfoo/dist/src/python/wrapper.py", line 39, in <module>
+      result = call_method(script_path, method_name, *data)
+    File "/Users/sdm/.nvm/versions/node/v22.14.0/lib/node_modules/promptfoo/dist/src/python/wrapper.py", line 28, in call_method
+      return method_to_call(*args)
+    File "/var/folders/qz/s0hqld295s5gwx84c1sdd9bh0000gn/T/temp-python-code-1755628084541-f0a5db6c3e1cf.py", line 5, in main
+      print(abs(float(json.loads(output)[2]) - 0.485782) <= 0.001)
+                      ~~~~~~~~~~^^^^^^^^
+    File "/opt/homebrew/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/json/__init__.py", line 339, in loads
+      raise TypeError(f'the JSON object must be str, bytes or bytearray, '
+                      f'not {s.__class__.__name__}')

@@ -1,3 +1,9 @@
 google-generativeai
 pydantic-ai
 python-dotenv
+fastapi
+uvicorn
+pandas
+numpy
+matplotlib
+lxml
