@@ -1,0 +1,15 @@
+2025-08-19T18:20:24.481Z [ERROR]: Failed to validate configuration: bad indentation of a mapping entry (11:3)
+
+  8 |       body: file://questions.txt
+  9 |       transformResponse: json
+ 10 | 
+ 11 |   assert:
+--------^
+ 12 |     # Structural gate – no score, ...
+ 13 |     - type: is-json
+2025-08-19T18:21:37.883Z [ERROR]: Failed to validate configuration: Test case must contain one of the following properties: assert, vars, options, metadata, provider, providerOutput, threshold.
+
+Instead got:
+{
+  "description": "Data analysis"
+}

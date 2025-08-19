@@ -1,514 +1,343 @@
 import os
+import time
+import uuid
+import shutil
+import json
+import base64
+import multiprocessing
+import resource
+from pathlib import Path
+from typing import Optional, List, Dict, Any
 
+# --- Core Dependencies ---
+import pandas as pd
+import numpy as np
+from fastapi import FastAPI, UploadFile, File, Form, Request, HTTPException
+from fastapi.responses import JSONResponse
+import uvicorn
+
+# --- AI and Environment Dependencies ---
 import google.generativeai as genai
 from dotenv import load_dotenv
 from pydantic_ai import Agent
-import pandas as pd
-import numpy as np
 
-# Load environment variables from .env file
-load_dotenv()
+# ---- 1. Workspace & File Management ---- #
 
-# Configure the Gemini 2.5 Pro model
-try:
-    api_key = os.environ["GEMINI_API_KEY"]
-    genai.configure(api_key=api_key)
-except KeyError:
-    print("Error: GEMINI_API_KEY not found.")
-    print("Please create a .env file and add your GEMINI_API_KEY.")
-    exit()
-except Exception as e:
-    print(f"An error occurred during model initialization: {e}")
-    exit()
+class WorkspaceManager:
+    """Manages isolated file system environments for each API request."""
+    def __init__(self, base_dir: str = "./agent_workspaces"):
+        self.base_dir = Path(base_dir)
+        self.graveyard_dir = self.base_dir / "_graveyard"
+        self.base_dir.mkdir(exist_ok=True)
+        self.graveyard_dir.mkdir(exist_ok=True)
 
-system_prompt = """
-You are a DATA ANALYSIS AGENT specialized in web data scraping, preprocessing, exploratory analysis, statistics, and charting.
+    def create(self) -> str:
+        """Creates a new, unique workspace and returns its ID."""
+        workspace_id = uuid.uuid4().hex
+        workspace_path = self.base_dir / workspace_id
+        for subdir in ['inputs', 'outputs', 'temp']:
+            (workspace_path / subdir).mkdir(parents=True, exist_ok=True)
+        # Write metadata for tracking and cleanup
+        meta = {'created_at': time.time(), 'status': 'ACTIVE'}
+        (workspace_path / "meta.json").write_text(json.dumps(meta))
+        return workspace_id
 
-## Mission
-Given a user request, you will:
-1) PLAN the workflow.
-2) CALL the appropriate tools step by step.
-3) RETURN a concise FINAL ANSWER with any file paths produced (datasets, charts, exports).
+    def get_path(self, workspace_id: str, *subdirs) -> Path:
+        """Returns a safe path within a given workspace."""
+        if not workspace_id:
+            raise ValueError("Workspace ID cannot be empty.")
+        p = self.base_dir / workspace_id
+        for subdir in subdirs:
+            p = p / subdir
+        p.parent.mkdir(parents=True, exist_ok=True)
+        return p
 
-## Hard Rules 
-- Use ONLY the registered tools listed under TOOL CATALOG. Do NOT invent tool names or arguments.
-- Prefer custom code for simpler tasks. Use tools only for complex operations & reliability.
-- Each tool call must include exactly the arguments shown in its signature (no extra keys).
-- Never mix natural language inside a tool call. Narration must be separate from tool calls.
-- If a request is purely explanatory, respond in plain text (do NOT call a tool).
-- When producing Python via execute_code, the snippet MUST assign the final value to a variable named `result`.
-- All file outputs must be written under ./outputs (create it if needed in code).
+    def cleanup(self, workspace_id: str):
+        """Moves a completed workspace to the graveyard for later deletion."""
+        workspace_path = self.base_dir / workspace_id
+        if workspace_path.exists():
+            shutil.move(str(workspace_path), self.graveyard_dir / workspace_id)
 
-## Step-by-step Protocol
-Always follow these steps in order:
-1) PLAN: Brief plan of steps you will take.
-2) SCRAPE or LOAD: Use fetch_html/read_csv/read_json as appropriate.
-3) PARSE/BUILD DATA: Use parse_html_table or execute_code to construct a DataFrame and put it in the session store.
-4) CLEAN/PREPROCESS: Use transform_dataset for selections, filters, type parsing, missing values, etc.
-5) ANALYZE: Use describe_dataset or execute_code for custom stats/tests.
-6) CHART: Use plot_dataset to save figures under ./outputs and report the path.
-7) EXPORT (optional): Use export_dataset if needed by the user.
-8) FINAL ANSWER: Summarize findings and include any output paths.
+workspace_manager = WorkspaceManager()
 
-## Response Format
-- Start with: PLAN: <one or two lines>
-- Then perform tool calls as needed.
-- End with: FINAL ANSWER: <key results, paths, next steps>
+# ---- 2. Dynamic System Prompt for Gemini ---- #
 
-## Examples (strictly illustrative — adapt column names as needed)
+def get_system_prompt(workspace_id: str, input_files: List[str]) -> str:
+    """Generates a system prompt tailored to the specific request and workspace."""
+    workspace_path = workspace_manager.get_path(workspace_id)
+    input_dir = workspace_path / 'inputs'
+    output_dir = workspace_path / 'outputs'
+    
+    file_list = "\n".join([f"- {f}" for f in input_files])
 
-Example A: Scrape a table, build a dataset, clean, describe, plot
-PLAN: fetch → parse → create dataset → clean → describe → chart → final
-1) fetch_html(url="https://example.com/table")
-2) parse_html_table(html="<HTML_FROM_STEP_1>", selector="table.data", index=0)
-3) create_dataset_from_csv(csv_text="<CSV_FROM_STEP_2>", name="web")
-4) transform_dataset(name="web", ops_json='{"parse_dates":["date"],"select":["date","value"]}')
-5) describe_dataset(name="web")
-6) plot_dataset(name="web", kind="line", x="date", y="value", output_path="./outputs/web_line.png")
-FINAL ANSWER: Summarize key stats and include ./outputs/web_line.png
+    return f"""
+You are an autonomous DATA ANALYST AGENT. Your task is to analyze data and answer questions based on user-provided files.
 
-Example B: Load CSV direct and filter
-PLAN: load CSV → filter → describe → export
-1) read_csv(source="https://site.com/data.csv", name="sales")
-2) transform_dataset(name="sales", ops_json='{"filter":"region == \\'APAC\\'"}')
-3) describe_dataset(name="sales")
-4) export_dataset(name="sales", path="sales_apac.csv", format="csv")
-FINAL ANSWER: Report shape and ./outputs/sales_apac.csv
+## CRITICAL INSTRUCTIONS
+1.  **Output Format is KING**: You MUST format your final output *exactly* as requested in the user's `questions.txt`. Do NOT add any extra summaries, text, or natural language. If the user asks for a JSON array, provide ONLY the JSON array.
+2.  **File System is Your ONLY Reality**:
+    - **Workspace ID**: {workspace_id}
+    - **Read ALL inputs from**: {input_dir}
+    - **Write ALL outputs to**: {output_dir}
+    - **Available Input Files**:
+      {file_list}
+    - You CANNOT access files outside these directories. All file paths in your tool calls must be absolute paths within this workspace.
+3.  **Tool Usage**:
+    - Use ONLY the provided tools.
+    - Call tools step-by-step to achieve the final answer.
+4.  **Error Handling**: If a step fails, try to recover or move on. If you cannot produce a valid final answer, output a validly formatted JSON array with error messages as strings, like: `["Error: Could not process file X", "Error: Calculation failed"]`.
 
-If unsure about a step, explain briefly and proceed with the safest next action.
+## Workflow
+1.  **PLAN**: Understand the questions in `questions.txt`.
+2.  **EXECUTE**: Use tools to load data from the `inputs` folder, process it, and generate any required outputs (like plots) in the `outputs` folder.
+3.  **ANSWER**: Construct the final response in the exact format requested and output it.
 """
 
-# Create a Pydantic AI agent
-agent = Agent(
-    model="gemini-2.5-flash",
-    system_prompt=system_prompt,  # string from above
-    retries=2,  # helps recover from MALFORMED_FUNCTION_CALL
-)
+# ---- 3. Workspace-Aware AI Agent Tools ---- #
 
-# ---- Add above main(), after `agent = Agent(...)` ----
-from typing import Optional, List, Dict
-import io, os, json
+DATASETS: Dict[str, pd.DataFrame] = {}
 
-DATASETS: dict[str, "pandas.DataFrame"] = {}
+# Helper to get safe paths
+def safe_path(workspace_id: str, filename: str, subdir: str) -> str:
+    return str(workspace_manager.get_path(workspace_id, subdir, filename))
 
-@agent.tool_plain
-def load_data(name: str, source: str, fmt: Optional[str] = None) -> str:
-    """
-    Load a dataset into memory as DATASETS[name].
-    - source: local path or URL. Supports CSV/TSV/XLSX/JSON; HTML tables via 'scrape_table' instead.
-    - fmt: optional override, one of ["csv","tsv","xlsx","json"].
-    Returns: JSON with {"name":..., "rows":..., "cols":..., "columns":[...]}.
-    """
+@Agent.tool_plain
+def load_data(name: str, source_filename: str, workspace_id: str, fmt: Optional[str] = None) -> str:
+    """Loads a data file from the workspace's 'inputs' directory into a pandas DataFrame."""
     try:
-        fmt = (fmt or os.path.splitext(source.lower())[1].lstrip(".") or "").replace(
-            "htm", ""
-        )
-        if fmt in ("", "csv"):
-            df = pd.read_csv(source)
-        elif fmt == "tsv":
-            df = pd.read_csv(source, sep="\t")
-        elif fmt in ("xls", "xlsx"):
-            df = pd.read_excel(source)
-        elif fmt == "json":
-            df = pd.read_json(source, orient="records")
+        filepath = safe_path(workspace_id, source_filename, 'inputs')
+        if not Path(filepath).exists():
+            return f"Error: Input file not found at {filepath}"
+            
+        file_ext = fmt or Path(filepath).suffix.lower().lstrip('.')
+        if file_ext == 'csv':
+            df = pd.read_csv(filepath)
+        elif file_ext in ['xls', 'xlsx']:
+            df = pd.read_excel(filepath)
+        elif file_ext == 'json':
+            df = pd.read_json(filepath)
         else:
-            return f"Error: Unsupported fmt '{fmt}'."
+            return f"Error: Unsupported file format '{file_ext}'"
+        
         DATASETS[name] = df
-        return json.dumps(
-            {
-                "name": name,
-                "rows": int(df.shape[0]),
-                "cols": int(df.shape[1]),
-                "columns": list(map(str, df.columns)),
-            }
-        )
+        return json.dumps({"name": name, "rows": df.shape[0], "cols": df.shape[1]})
     except Exception as e:
         return f"Error loading data: {e}"
 
-
-@agent.tool_plain
-def scrape_table(
-    name: str, url: str, selector: Optional[str] = None, table_index: int = 0
-) -> str:
-    """
-    Scrape an HTML table and store as DATASETS[name].
-    - Uses pandas.read_html; if selector is provided, it's used as match/attrs.
-    - table_index: which table to pick if multiple.
-    Returns JSON summary like load_data.
-    """
+@Agent.tool_plain
+def scrape_html_table(name: str, url: str, table_index: int = 0) -> str:
+    """Scrapes a table from a URL and loads it into a DataFrame."""
     try:
-        tables = pd.read_html(url, match=selector if selector else None)
+        tables = pd.read_html(url)
         if not tables:
-            return "Error: No tables found."
+            return "Error: No tables found on page."
         df = tables[table_index]
         DATASETS[name] = df
-        return json.dumps(
-            {
-                "name": name,
-                "rows": int(df.shape[0]),
-                "cols": int(df.shape[1]),
-                "columns": list(map(str, df.columns)),
-            }
-        )
+        return json.dumps({"name": name, "rows": df.shape, "cols": df.shape[1]})
     except Exception as e:
         return f"Error scraping table: {e}"
 
-
-@agent.tool_plain
-def profile(name: str, sample_rows: int = 5) -> str:
-    """
-    Quick profile of DATASETS[name]: shape, dtypes, null counts, head(sample_rows).
-    Returns JSON with keys: rows, cols, dtypes, nulls, head.
-    """
+@Agent.tool_plain
+def execute_pandas_code(code: str, dataset_name: str) -> str:
+    """Executes a snippet of pandas code on a loaded DataFrame. The DataFrame is available as `df`."""
+    if dataset_name not in DATASETS:
+        return f"Error: Dataset '{dataset_name}' not found."
+    df = DATASETS[dataset_name]
     try:
-        df = DATASETS[name]
-        info = {
-            "rows": int(df.shape[0]),
-            "cols": int(df.shape[1]),
-            "dtypes": {c: str(t) for c, t in df.dtypes.items()},
-            "nulls": {c: int(df[c].isna().sum()) for c in df.columns},
-            "head": df.head(sample_rows).to_dict(orient="records"),
-        }
-        return json.dumps(info)
+        # Create a local scope for exec to run in
+        local_scope = {'df': df, 'pd': pd, 'np': np}
+        exec(code, {}, local_scope)
+        # The result of the code should be stored in a variable named 'result'
+        result = local_scope.get('result', "Code executed, but no 'result' variable was set.")
+        # If the result is a dataframe, update the dataset
+        if isinstance(result, pd.DataFrame):
+            DATASETS[dataset_name] = result
+            return f"DataFrame '{dataset_name}' updated. Shape: {result.shape}"
+        return json.dumps(result, default=str)
     except Exception as e:
-        return f"Error profiling: {e}"
+        return f"Error executing code: {e}"
 
-
-@agent.tool_plain
-def clean_basic(
+@Agent.tool_plain
+def create_plot(
     name: str,
-    target: Optional[str] = None,
-    drop_duplicates: bool = True,
-    strip_whitespace: bool = True,
-    parse_dates: Optional[List[str]] = None,
-) -> str:
-    """
-    Basic cleanup on DATASETS[name]:
-      - drop_duplicates
-      - strip leading/trailing whitespace from object columns
-      - parse_dates: list of columns to convert to datetime (UTC-naive)
-    Stores result to DATASETS[target or name]; returns JSON with rows_before/after.
-    """
-    try:
-        df = DATASETS[name].copy()
-        rows_before = int(df.shape[0])
-        if drop_duplicates:
-            df = df.drop_duplicates()
-        if strip_whitespace:
-            for c in df.select_dtypes(include=["object"]).columns:
-                df[c] = df[c].astype(str).str.strip()
-        if parse_dates:
-            for c in parse_dates:
-                if c in df.columns:
-                    df[c] = pd.to_datetime(df[c], errors="coerce")
-        out_name = target or name
-        DATASETS[out_name] = df
-        return json.dumps(
-            {
-                "name": out_name,
-                "rows_before": rows_before,
-                "rows_after": int(df.shape[0]),
-            }
-        )
-    except Exception as e:
-        return f"Error cleaning: {e}"
-
-
-@agent.tool_plain
-def filter_rows(name: str, query: str, target: Optional[str] = None) -> str:
-    """
-    Filter DATASETS[name] using pandas.query syntax, e.g., "country == 'IN' and revenue > 1000".
-    Stores to DATASETS[target or name]; returns {"rows": ...}.
-    """
-    try:
-        df = DATASETS[name]
-        out = df.query(query, engine="python")
-        out_name = target or name
-        DATASETS[out_name] = out
-        return json.dumps({"name": out_name, "rows": int(out.shape[0])})
-    except Exception as e:
-        return f"Error filtering: {e}"
-
-
-@agent.tool_plain
-def select_columns(name: str, columns: List[str], target: Optional[str] = None) -> str:
-    """
-    Select columns from DATASETS[name] in the given order.
-    Stores to DATASETS[target or name]; returns {"columns": [...]}.
-    """
-    try:
-        df = DATASETS[name][columns].copy()
-        out_name = target or name
-        DATASETS[out_name] = df
-        return json.dumps({"name": out_name, "columns": columns})
-    except Exception as e:
-        return f"Error selecting columns: {e}"
-
-
-@agent.tool_plain
-def aggregate(
-    name: str, by: List[str], agg: Dict[str, str], target: Optional[str] = None
-) -> str:
-    """
-    Group DATASETS[name] by the 'by' columns and aggregate numeric columns per 'agg' dict,
-    e.g., agg={"revenue":"sum","quantity":"mean"}.
-    Stores to DATASETS[target or name]; returns shape summary.
-    """
-    try:
-        df = DATASETS[name].groupby(by, dropna=False).agg(agg).reset_index()
-        out_name = target or name
-        DATASETS[out_name] = df
-        return json.dumps(
-            {"name": out_name, "rows": int(df.shape[0]), "cols": int(df.shape[1])}
-        )
-    except Exception as e:
-        return f"Error aggregating: {e}"
-
-
-@agent.tool_plain
-def join(
-    left: str,
-    right: str,
-    on: List[str],
-    how: str = "inner",
-    target: Optional[str] = None,
-) -> str:
-    """
-    Join DATASETS[left] with DATASETS[right] on columns 'on'. how in ["inner","left","right","outer"].
-    Stores to DATASETS[target or left]; returns shape summary.
-    """
-    try:
-        df = DATASETS[left].merge(DATASETS[right], on=on, how=how)
-        out_name = target or left
-        DATASETS[out_name] = df
-        return json.dumps(
-            {"name": out_name, "rows": int(df.shape[0]), "cols": int(df.shape[1])}
-        )
-    except Exception as e:
-        return f"Error joining: {e}"
-
-
-@agent.tool_plain
-def resample_time(
-    name: str,
-    date_col: str,
-    freq: str,
-    agg: Dict[str, str],
-    target: Optional[str] = None,
-) -> str:
-    """
-    Resample a time series: ensure DATASETS[name][date_col] is datetime, set index, resample by 'freq' (e.g., 'D','W','M'),
-    aggregate per 'agg' dict. Stores to DATASETS[target or name].
-    """
-    try:
-        df = DATASETS[name].copy()
-        df[date_col] = pd.to_datetime(df[date_col], errors="coerce")
-        out = df.set_index(date_col).resample(freq).agg(agg).reset_index()
-        out_name = target or name
-        DATASETS[out_name] = out
-        return json.dumps(
-            {"name": out_name, "rows": int(out.shape[0]), "cols": int(out.shape[1])}
-        )
-    except Exception as e:
-        return f"Error resampling: {e}"
-
-
-@agent.tool_plain
-def corr(name: str, columns: Optional[List[str]] = None) -> str:
-    """
-    Pearson correlation matrix for DATASETS[name]. If columns is provided, use only those.
-    Returns a JSON object: {"corr": {col_i: {col_j: value}}}.
-    """
-    try:
-        df = DATASETS[name]
-        if columns:
-            df = df[columns]
-        c = df.corr(numeric_only=True)
-        return json.dumps({"corr": json.loads(c.to_json())})
-    except Exception as e:
-        return f"Error computing correlation: {e}"
-
-
-@agent.tool_plain
-def linreg(name: str, y: str, X: List[str]) -> str:
-    """
-    Simple OLS using numpy lstsq on DATASETS[name]: y ~ X.
-    Returns JSON with coefficients (including intercept) and R2.
-    """
-    try:
-        df = DATASETS[name].dropna(subset=[y] + X)
-        Y = df[y].to_numpy()
-        Xmat = np.column_stack([np.ones(len(df))] + [df[c].to_numpy() for c in X])
-        coef, *_ = np.linalg.lstsq(Xmat, Y, rcond=None)
-        yhat = Xmat @ coef
-        ss_res = float(((Y - yhat) ** 2).sum())
-        ss_tot = float(((Y - Y.mean()) ** 2).sum())
-        r2 = 1.0 - ss_res / ss_tot if ss_tot else 0.0
-        return json.dumps(
-            {
-                "intercept": coef[0],
-                "coefficients": {X[i]: coef[i + 1] for i in range(len(X))},
-                "r2": r2,
-            }
-        )
-    except Exception as e:
-        return f"Error in linreg: {e}"
-
-
-@agent.tool_plain
-def plot_line(
-    name: str,
+    plot_type: str,
     x: str,
     y: List[str],
+    workspace_id: str,
     title: Optional[str] = None,
-    outfile: Optional[str] = None,
+    output_filename: Optional[str] = None
 ) -> str:
-    """
-    Line plot from DATASETS[name]. x is column for X-axis; y is a list of Y columns.
-    Saves PNG to outfile or 'chart_line.png'; returns the file path.
-    """
+    """Creates a plot (line, bar, scatter) and saves it to the workspace 'outputs' directory."""
     try:
         import matplotlib
-
-        matplotlib.use("Agg")
+        matplotlib.use("Agg") # Non-interactive backend
         import matplotlib.pyplot as plt
 
+        if name not in DATASETS:
+            return f"Error: Dataset '{name}' not found."
         df = DATASETS[name]
-        outfile = outfile or "chart_line.png"
-        plt.figure()
-        for col in y:
-            plt.plot(df[x], df[col], label=col)
-        plt.legend()
-        if title:
-            plt.title(title)
+
+        plt.figure(figsize=(10, 6))
+        if plot_type == 'line':
+            for col in y:
+                plt.plot(df[x], df[col], label=col)
+        elif plot_type == 'bar':
+            plt.bar(df[x], df[y[0]])
+        elif plot_type == 'scatter':
+            plt.scatter(df[x], df[y])
+        else:
+            return f"Error: Invalid plot type '{plot_type}'"
+
         plt.xlabel(x)
-        plt.ylabel(", ".join(y))
+        plt.ylabel(', '.join(y))
+        if title: plt.title(title)
+        if len(y) > 1 and plot_type == 'line': plt.legend()
         plt.tight_layout()
-        plt.savefig(outfile, dpi=144)
+
+        output_path = safe_path(workspace_id, output_filename or f"{name}_{plot_type}.png", 'outputs')
+        plt.savefig(output_path)
         plt.close()
-        return outfile
+        return f"Plot saved to {output_path}"
     except Exception as e:
-        return f"Error plotting line: {e}"
+        return f"Error creating plot: {e}"
 
-
-@agent.tool_plain
-def plot_bar(
-    name: str,
-    x: str,
-    y: str,
-    title: Optional[str] = None,
-    outfile: Optional[str] = None,
-) -> str:
-    """
-    Bar chart from DATASETS[name], one Y series vs categorical X.
-    Saves PNG to outfile or 'chart_bar.png'; returns the file path.
-    """
+@Agent.tool_plain
+def create_base64_image(filepath: str) -> str:
+    """Reads an image file from the workspace and returns it as a base64 data URI."""
     try:
-        import matplotlib
-
-        matplotlib.use("Agg")
-        import matplotlib.pyplot as plt
-
-        df = DATASETS[name]
-        outfile = outfile or "chart_bar.png"
-        plt.figure()
-        plt.bar(df[x], df[y])
-        if title:
-            plt.title(title)
-        plt.xlabel(x)
-        plt.ylabel(y)
-        plt.xticks(rotation=45, ha="right")
-        plt.tight_layout()
-        plt.savefig(outfile, dpi=144)
-        plt.close()
-        return outfile
+        if not Path(filepath).exists():
+            return f"Error: File not found at {filepath}"
+        
+        with open(filepath, "rb") as image_file:
+            encoded_string = base64.b64encode(image_file.read()).decode()
+        
+        ext = Path(filepath).suffix.lower().lstrip('.')
+        return f"data:image/{ext};base64,{encoded_string}"
     except Exception as e:
-        return f"Error plotting bar: {e}"
+        return f"Error encoding image: {e}"
+        
+# ---- 4. Agent Execution with Resource Limits ---- #
 
-
-@agent.tool_plain
-def save_csv(name: str, path: str) -> str:
-    """
-    Save DATASETS[name] to a CSV file at 'path'. Returns the absolute path.
-    """
+def agent_process_target(prompt: str, workspace_id: str, input_files: List[str], output_queue: multiprocessing.Queue):
+    """The function that runs in a separate, resource-limited process."""
     try:
-        DATASETS[name].to_csv(path, index=False)
-        return os.path.abspath(path)
-    except Exception as e:
-        return f"Error saving CSV: {e}"
+        # Set memory limits (on UNIX-like systems)
+        mem_limit_mb = 2048
+        resource.setrlimit(resource.RLIMIT_AS, (mem_limit_mb * 1024 * 1024, mem_limit_mb * 1024 * 1024))
+        
+        # Configure AI
+        load_dotenv()
+        api_key = os.environ.get("GEMINI_API_KEY")
+        if not api_key:
+            raise ValueError("GEMINI_API_KEY not found in environment.")
+        genai.configure(api_key=api_key)
 
-
-# --- Network helpers (for 'network' questions) ---
-@agent.tool_plain
-def load_edges(
-    name: str,
-    source: str,
-    src_col: str = "source",
-    dst_col: str = "target",
-    sep: str = ",",
-) -> str:
-    """
-    Load an edge list (CSV/TSV) with columns src_col, dst_col into DATASETS[name]; also returns basic counts.
-    """
-    try:
-        df = pd.read_csv(source, sep=sep)
-        DATASETS[name] = df
-        return json.dumps(
-            {
-                "name": name,
-                "rows": int(df.shape[0]),
-                "cols": int(df.shape[1]),
-                "columns": list(df.columns),
-            }
+        # Create agent with dynamic prompt and tools
+        agent = Agent(
+            model="gemini-2.5-flash",
+            system_prompt=get_system_prompt(workspace_id, input_files),
+            retries=1
         )
+        # Register tools
+        agent.add_tool(load_data)
+        agent.add_tool(scrape_html_table)
+        agent.add_tool(execute_pandas_code)
+        agent.add_tool(create_plot)
+        agent.add_tool(create_base64_image)
+
+        result = agent.run_sync(prompt)
+        output_queue.put(result.output)
     except Exception as e:
-        return f"Error loading edges: {e}"
+        output_queue.put(json.dumps({"error": "Agent process failed", "details": str(e)}))
+
+def run_agent_in_process(prompt: str, workspace_id: str, input_files: List[str]) -> str:
+    """Manages the agent's subprocess, enforcing a timeout."""
+    ctx = multiprocessing.get_context('fork')
+    output_queue = ctx.Queue()
+    
+    process = ctx.Process(
+        target=agent_process_target,
+        args=(prompt, workspace_id, input_files, output_queue)
+    )
+    
+    process.start()
+    process.join(timeout=295) # 5 minutes timeout, minus a small buffer
+
+    if process.is_alive():
+        process.terminate()
+        process.join()
+        # Return a valid JSON array indicating timeout
+        return json.dumps(["Error: Analysis timed out after 5 minutes."])
+    
+    if output_queue.empty():
+        return json.dumps(["Error: Agent process finished with no output."])
+    
+    return output_queue.get()
 
 
-@agent.tool_plain
-def network_stats(
-    name: str, src_col: str = "source", dst_col: str = "target", top_k: int = 10
-) -> str:
+# ---- 5. FastAPI Application ---- #
+
+app = FastAPI(title="Data Analyst Agent API")
+
+@app.post("/api/")
+async def analyze(request: Request):
     """
-    Compute simple network stats from DATASETS[name] edge list: node_count, edge_count, degree per node (top_k).
-    Returns JSON with degree rankings.
+    Accepts multipart/form-data with 'questions.txt' and other optional files,
+    runs the data analysis agent, and returns the result.
     """
+    if "multipart/form-data" not in request.headers.get("content-type", ""):
+        raise HTTPException(status_code=400, detail="Invalid content type. Must be multipart/form-data.")
+
+    workspace_id = workspace_manager.create()
+    input_files = []
+    questions_content = None
+
     try:
-        df = DATASETS[name]
-        deg = pd.concat(
-            [df[src_col].rename("node"), df[dst_col].rename("node")]
-        ).value_counts()
-        stats = {
-            "node_count": int(deg.shape[0]),
-            "edge_count": int(df.shape[0]),
-            "top_degree": [
-                {"node": str(n), "degree": int(d)} for n, d in deg.head(top_k).items()
-            ],
-        }
-        return json.dumps(stats)
-    except Exception as e:
-        return f"Error computing network stats: {e}"
+        form = await request.form()
+        for name, file in form.items():
+            if isinstance(file, UploadFile):
+                filename = file.filename
+                input_files.append(filename)
+                save_path = workspace_manager.get_path(workspace_id, 'inputs', filename)
+                
+                with open(save_path, "wb") as buffer:
+                    shutil.copyfileobj(file.file, buffer)
+                
+                if filename == "questions.txt":
+                    save_path.seek(0)
+                    questions_content = save_path.read().decode('utf-8')
 
+        if not questions_content:
+            raise HTTPException(status_code=400, detail="questions.txt is a required file.")
 
-def main():
-    """Main function to run the interactive AI agent."""
-    print("AI Agent is ready. Type 'exit' to quit.")
-    while True:
+        # Run the agent in a separate, timed process
+        agent_output = run_agent_in_process(questions_content, workspace_id, input_files)
+        
+        # The agent should return a string that is a valid JSON array.
+        # We parse it to ensure it's valid JSON and return it with the correct content type.
         try:
-            prompt = input("You: ")
-            if prompt.lower() == "exit":
-                break
+            # Try to parse the agent's output as JSON
+            json_output = json.loads(agent_output)
+            return JSONResponse(content=json_output)
+        except json.JSONDecodeError:
+            # If it's not valid JSON, it's an error or malformed output
+            return JSONResponse(content={"error": "Agent returned non-JSON output", "raw_output": agent_output}, status_code=500)
 
-            # Use the agent to process the prompt
-            response = agent.run_sync(prompt)
-            print(f"AI: {response.output}")
+    except Exception as e:
+        # General error handling
+        return JSONResponse(content={"error": "An unexpected error occurred.", "details": str(e)}, status_code=500)
+    finally:
+        # Schedule cleanup
+        workspace_manager.cleanup(workspace_id)
 
-        except (KeyboardInterrupt, EOFError):
-            print("\nExiting.")
-            break
-        except Exception as e:
-            print(f"An unexpected error occurred: {e}")
+@app.get("/")
+def root():
+    return {"message": "Data Analyst Agent API is running. POST to /api/ to analyze."}
 
+
+# ---- 6. Main Entrypoint ---- #
 
 if __name__ == "__main__":
-    main()
+    # Use 4 workers to handle simultaneous requests as per project spec
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, workers=4)
+
