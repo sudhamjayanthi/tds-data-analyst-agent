@@ -1,236 +1,235 @@
-# Data Analyst Agent
+Project: Data Analyst Agent
+Deploy a data analyst agent. This is an API that uses LLMs to source, prepare, analyze, and visualize any data.
 
-A powerful API that uses Google's Gemini 2.5 Pro to source, prepare, analyze, and visualize any data. This agent can handle complex data analysis tasks including web scraping, statistical analysis, and data visualization.
+Your application exposes an API endpoint. You may host it anywhere. Let’s assume it’s at https://app.example.com/api/.
 
-## Features
+The endpoint must accept a POST request, e.g. POST https://app.example.com/api/ with a data analysis task description and optional attachments in the body. For example:
 
--   🤖 **AI-Powered Analysis**: Uses Gemini 2.5 Pro for intelligent data interpretation
--   📊 **Data Visualization**: Creates charts, plots, and statistical visualizations
--   🌐 **Web Scraping**: Can scrape data from Wikipedia and other sources
--   📁 **Multi-Format Support**: Handles CSV, JSON, images, and text files
--   🗄️ **Database Integration**: Supports DuckDB for large dataset queries
--   ⚡ **Fast API**: Built with FastAPI for high performance
+curl "https://app.example.com/api/" -F "questions.txt=@question.txt" -F "image.png=@image.png" -F "data.csv=@data.csv"
+Copy to clipboardErrorCopied
+questions.txt will ALWAYS be sent and contain the questions. There may be zero or more additional files passed.
 
-## Quick Start
+The answers must be sent within 3 minutes in the format requested.
 
-### 1. Installation
+[!WARNING] > **These are not the final questions you’ll be evaluated on. These examples are indicative.
 
-```bash
-# Clone the repository
-git clone <your-repo-url>
-cd tds-proj-2
+Sample questions
+These are examples of questions.txt that will be sent. NOT the actual question, which will be a secret.
 
-# Install dependencies using uv (recommended)
-uv sync
-
-# Or with pip
-pip install -r requirements.txt
-```
-
-### 2. Configuration
-
-```bash
-# Copy the example environment file
-cp env.example .env
-
-# Edit .env and add your Gemini API key
-GEMINI_API_KEY=your_gemini_api_key_here
-```
-
-Get your Gemini API key from: https://aistudio.google.com/app/apikey
-
-### 3. Run the Application
-
-```bash
-# Start the server with uv
-uv run python main.py
-
-# Or using uvicorn directly
-uv run uvicorn main:app --host 0.0.0.0 --port 8000
-```
-
-The API will be available at `http://localhost:8000`
-
-## API Usage
-
-### Endpoint
-
-```
-POST /api/
-```
-
-### Request Format
-
-Send a multipart form request with:
-
--   `questions.txt`: A text file containing your analysis questions (required)
--   Additional files: CSV, JSON, images, or other data files (optional)
-
-### Example Usage
-
-```bash
-# Basic analysis with questions only
-curl -X POST "http://localhost:8000/api/" \
-  -F "questions.txt=@questions.txt"
-
-# Analysis with data files
-curl -X POST "http://localhost:8000/api/" \
-  -F "questions.txt=@questions.txt" \
-  -F "data.csv=@data.csv" \
-  -F "image.png=@image.png"
-```
-
-### Sample Questions
-
-The agent can handle various types of analysis:
-
-**Web Scraping Analysis:**
-
-```
-Scrape the list of highest grossing films from Wikipedia at:
+Scrape the list of highest grossing films from Wikipedia. It is at the URL:
 https://en.wikipedia.org/wiki/List_of_highest-grossing_films
 
-Answer these questions:
+Answer the following questions and respond with a JSON array of strings containing the answer.
+
 1. How many $2 bn movies were released before 2000?
 2. Which is the earliest film that grossed over $1.5 bn?
-3. What's the correlation between Rank and Peak?
-4. Draw a scatterplot of Rank and Peak with a dotted red regression line.
+3. What's the correlation between the Rank and Peak?
+4. Draw a scatterplot of Rank and Peak along with a dotted red regression line through it.
+   Return as a base-64 encoded data URI, `"data:image/png;base64,iVBORw0KG..."` under 100,000 bytes.
+Copy to clipboardErrorCopied
+Here’s another example.
+
+The Indian high court judgement dataset contains judgements from the Indian High Courts, downloaded from [ecourts website](https://judgments.ecourts.gov.in/). It contains judgments of 25 high courts, along with raw metadata (as .json) and structured metadata (as .parquet).
+
+- 25 high courts
+- ~16M judgments
+- ~1TB of data
+
+Structure of the data in the bucket:
+
+- `data/pdf/year=2025/court=xyz/bench=xyz/judgment1.pdf,judgment2.pdf`
+- `metadata/json/year=2025/court=xyz/bench=xyz/judgment1.json,judgment2.json`
+- `metadata/parquet/year=2025/court=xyz/bench=xyz/metadata.parquet`
+- `metadata/tar/year=2025/court=xyz/bench=xyz/metadata.tar.gz`
+- `data/tar/year=2025/court=xyz/bench=xyz/pdfs.tar`
+
+This DuckDB query counts the number of decisions in the dataset.
+
+```sql
+INSTALL httpfs; LOAD httpfs;
+INSTALL parquet; LOAD parquet;
+
+SELECT COUNT(*) FROM read_parquet('s3://indian-high-court-judgments/metadata/parquet/year=*/court=*/bench=*/metadata.parquet?s3_region=ap-south-1');
 ```
 
-**Database Analysis:**
+Here are the columns in the data:
 
-```
-Query the Indian high court dataset and answer:
-1. Which high court disposed the most cases from 2019-2022?
-2. What's the regression slope of registration to decision date by year?
-3. Plot the delay trends with a regression line.
-```
+| Column                 | Type    | Description                    |
+| ---------------------- | ------- | ------------------------------ |
+| `court_code`           | VARCHAR | Court identifier (e.g., 33~10) |
+| `title`                | VARCHAR | Case title and parties         |
+| `description`          | VARCHAR | Case description               |
+| `judge`                | VARCHAR | Presiding judge(s)             |
+| `pdf_link`             | VARCHAR | Link to judgment PDF           |
+| `cnr`                  | VARCHAR | Case Number Register           |
+| `date_of_registration` | VARCHAR | Registration date              |
+| `decision_date`        | DATE    | Date of judgment               |
+| `disposal_nature`      | VARCHAR | Case outcome                   |
+| `court`                | VARCHAR | Court name                     |
+| `raw_html`             | VARCHAR | Original HTML content          |
+| `bench`                | VARCHAR | Bench identifier               |
+| `year`                 | BIGINT  | Year partition                 |
 
-### Response Format
-
-Responses are returned as JSON arrays or objects depending on the request:
-
-```json
-[1, "Titanic", 0.485782, "data:image/png;base64,iVBORw0KG..."]
-```
-
-or
+Here is a sample row:
 
 ```json
 {
-	"question1": "answer1",
-	"question2": "answer2",
-	"plot": "data:image/png;base64,iVBORw0KG..."
+  "court_code": "33~10",
+  "title": "CRL MP(MD)/4399/2023 of Vinoth Vs The Inspector of Police",
+  "description": "No.4399 of 2023 BEFORE THE MADURAI BENCH OF MADRAS HIGH COURT ( Criminal Jurisdiction ) Thursday, ...",
+  "judge": "HONOURABLE  MR JUSTICE G.K. ILANTHIRAIYAN",
+  "pdf_link": "court/cnrorders/mdubench/orders/HCMD010287762023_1_2023-03-16.pdf",
+  "cnr": "HCMD010287762023",
+  "date_of_registration": "14-03-2023",
+  "decision_date": "2023-03-16",
+  "disposal_nature": "DISMISSED",
+  "court": "33_10",
+  "raw_html": "<button type='button' role='link'..",
+  "bench": "mdubench",
+  "year": 2023
 }
 ```
 
-## Deployment
+Answer the following questions and respond with a JSON object containing the answer.
 
-The application is designed to be easily deployable to various platforms:
-
-### Render (Free Tier)
-
-1. Fork or clone this repository to your GitHub account
-2. Go to [Render Dashboard](https://dashboard.render.com)
-3. Click "New" → "Web Service"
-4. Connect your GitHub repository
-5. Use these settings:
-    - **Build Command**: `pip install -r requirements.txt`
-    - **Start Command**: `gunicorn -c gunicorn.conf.py main:app`
-    - **Environment**: Python 3
-6. Add environment variable: `GEMINI_API_KEY` = your_gemini_api_key
-7. Deploy!
-
-### Other Free Options
-
-**PythonAnywhere**: Upload files and configure WSGI
-**Heroku**: Use Heroku CLI or GitHub integration
-**Google App Engine**: Use gcloud CLI for deployment
-**Koyeb**: Connect GitHub repository with automatic deployments
-
-### Railway
-
-1. Connect your GitHub repository to Railway
-2. Set the `GEMINI_API_KEY` environment variable
-3. Deploy automatically
-
-### Docker
-
-```bash
-# Build the image
-docker build -t data-analyst-agent .
-
-# Run the container
-docker run -p 8000:8000 -e GEMINI_API_KEY=your_key data-analyst-agent
+```json
+{
+  "Which high court disposed the most cases from 2019 - 2022?": "...",
+  "What's the regression slope of the date_of_registration - decision_date by year in the court=33_10?": "...",
+  "Plot the year and # of days of delay from the above question as a scatterplot with a regression line. Encode as a base64 data URI under 100,000 characters": "data:image/webp:base64,..."
+}
 ```
+Copy to clipboardErrorCopied
+More examples
+Sales
+Network
+Weather
+Sample responses
+Here is a sample response to the first question:
 
-## Development
+[1, "Titanic", 0.485782, "data:image/png;base64,iVBORw0KG... (response truncated)"]
+Copy to clipboardErrorCopied
+Evaluation
+Here is a sample evaluation to the first question. This is indicative. The real evaluation will depend on the actual question, which will be a secret.
 
-### Project Structure
+description: "TDS Data Analyst Agent – generic eval (20-point rubric)"
 
-```
-tds-proj-2/
-├── main.py              # Main FastAPI application
-├── requirements.txt     # Python dependencies
-├── README.md           # This file
-├── env.example         # Environment variable template
-└── LICENSE            # MIT License
-```
+providers:
+  - id: https
+    config:
+      url: https://app.example.com/api/ # Replace this with your API endpoint
+      method: POST
+      body: file://question.txt
+      transformResponse: json
 
-### Key Components
+  assert:
+    # Structural gate – no score, hard-fail if not a 4-element array
+    - type: is-json
+      value: {type: array, minItems: 4, maxItems: 4}
+      weight: 0
 
--   **DataAnalystAgent**: Core class handling analysis logic
--   **Gemini Integration**: Uses Google's Gemini 2.5 Pro for reasoning
--   **Data Processing**: Handles CSV, JSON, and web scraping
--   **Visualization**: Creates charts with matplotlib/seaborn
--   **Database Support**: DuckDB integration for large datasets
+    # 1️⃣ first answer must equal 1
+    - type: python
+      weight: 4
+      value: |
+        import json, sys
+        print(json.loads(output)[0] == 1)
 
-### Contributing
+    # 2️⃣ second answer must contain “Titanic” (case-insensitive)
+    - type: python
+      weight: 4
+      value: |
+        import json, re, sys
+        print(bool(re.search(r'titanic', json.loads(output)[1], re.I)))
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
+    # 3️⃣ third answer within ±0.001 of 0.485782
+    - type: python
+      weight: 4
+      value: |
+        import json, sys, math
+        print(abs(float(json.loads(output)[2]) - 0.485782) <= 0.001)
 
-## License
+    # 4️⃣ vision check ― send plot to GPT-4o-mini and grade multiple criteria
+    - type: llm-rubric
+      provider: openai:gpt-4.1-nano
+      weight: 8
+      # extract base-64 PNG from the 4th array element and inject into the prompt
+      preprocess: |
+        import json, re
+        data = json.loads(output)
+        context['plot'] = data[3
+      rubricPrompt: |
+        [
+          { "role": "system",
+            "content": "Grade the scatterplot. Award *score 1* only iff ALL are true: \
+            (a) it’s a scatterplot of Rank (x-axis) vs Peak (y-axis); \
+            (b) a dotted **red** regression line is present; \
+            (c) axes are visible & labelled; \
+            (d) file size < 100 kB. Otherwise score 0. \
+            Respond as JSON: {scatterplot:bool, regression:bool, axes:bool, size:bool, score:number}"
+          },
+          { "role": "user",
+            "content": [
+              { "type": "image_url",
+                "image_url": { "url": "{{plot}}" }      # data:image/png;base64,… :contentReference[oaicite:5]{index=5}
+              },
+              { "type": "text",
+                "text": "Here is the original task:\n\n{{vars.question}}\n\nReview the image and JSON above." }
+            ]
+          }
+        ]
+      threshold: 0.99  # require full pass
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+tests:
+  - description: "Data analysis"
+Copy to clipboardErrorCopied
+Your score will be the score provided by promptfoo. No normalization. What you get is what you get.
 
-## Support
+Deploy your application
+Deploy your application to a public URL that can be accessed by anyone. You may use any platform.
 
-For issues and questions:
+(If you use ngrok, ensure that it is running continuously until you get your results.)
 
-1. Check the existing issues on GitHub
-2. Create a new issue with detailed information
-3. Include sample requests and expected outputs
+Share your code
+Create a new public GitHub repository
+Add an MIT LICENSE file
+Commit and push your code
+Submit your URL
+Submission and Testing Process
+GitHub Accessibility Check
 
-## API Reference
+When you submit your endpoint and GitHub repository, the system first checks if your GitHub repo is publicly accessible.
+The repository must be unique.
+MIT License Check
 
-### Health Check
+The system verifies that your repository contains an MIT LICENSE file.
+API Testing Setup
 
-```
-GET /
-GET /health
-```
+Three simultaneous requests are sent to your API endpoint.
+Each request corresponds to a separate public test case, each with its own questions.txt file.
+Retries and Timeout Rules
 
-Returns API status and health information.
+Each request can retry up to 4 times.
+Each attempt has a 5-minute timeout.
+Your API must respond within 5 minutes per request.
+If your API does not respond in time, you will not be scored for all the questions in that test case.
+Tip: Always return something in the correct JSON structure within the time limit, even if the answers are wrong — you can still get partial marks.
+Multiple Questions per Request
 
-### Data Analysis
+A single curl request may contain multiple questions from the attached questions.txt.
+The 5-minute timeout applies to the entire request, not each question.
+Scoring for Public Test Cases
 
-```
-POST /api/
-```
+You are graded on how many questions are correct.
+If a request fails after 4 retries, you lose all marks for that test case.
+You can still earn marks if the other requests succeed.
+Resubmission Rules
 
-**Parameters:**
+During testing, you cannot submit another request (the form will be disabled).
+After tests complete, you can download the test output.
+You may then submit another test if desired (note: each test uses up your AI credits).
+Final Scoring
 
--   `questions.txt` (required): Text file with analysis questions
--   Additional files (optional): Data files to analyze
-
-**Response:**
-
--   JSON array or object with analysis results
--   Base64-encoded images for visualizations
--   Error messages with HTTP status codes
-
-**Timeout:** 3 minutes maximum processing time
+Marks come from private test cases evaluated after the deadline.
+Public test cases are for debugging purposes only — no marks are awarded for them.
+Submit your GitHub repository URL and your API endpoint URL at our custom Project 2 submission portal.

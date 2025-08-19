@@ -1,0 +1,6 @@
+---
+description: |
+  This project uses the uv package manager for all Python dependency management and installation. Always use uv (https://github.com/astral-sh/uv) for installing, updating, and managing packages. Do not use pip or other tools.
+globs:
+alwaysApply: false
+---
